@@ -11,8 +11,11 @@ retail_raw <- read_csv("data/retail_sales_raw.csv")
 
 head(retail_raw)
 
+<<<<<<< HEAD
 # 2.2b.
 
+=======
+>>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
 retail_raw <- read_csv(
   "data/retail_sales_raw.csv",
   na = ".",
@@ -39,8 +42,11 @@ retail_ts <- retail_raw_long |>
   mutate(Month = yearmonth(observation_date)) |>
   as_tsibble(index = Month, key = series_id)
 
+<<<<<<< HEAD
 # 2.4b.
 
+=======
+>>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
 head(retail_ts)
 
 has_gaps(retail_ts)
@@ -52,8 +58,11 @@ head(canadian_gas)
 key_vars(canadian_gas)
 index_var(canadian_gas)
 
+<<<<<<< HEAD
 # 2.5b.
 
+=======
+>>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
 can_gas <- canadian_gas |>
   select(Month, Volume)
 
@@ -68,8 +77,11 @@ can_gas_recent <- can_gas |>
 
 head(can_gas_recent)
 
+<<<<<<< HEAD
 # 2.6b.
 
+=======
+>>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
 can_gas_recent <- can_gas_recent |>
   mutate(year = year(Month),
          month = month(Month, label = TRUE),
@@ -82,7 +94,10 @@ can_gas_recent |>
 
 # The month with the highest average production is December, and the month with the lowest is June.
 
+<<<<<<< HEAD
 # 2.6c.
+=======
+>>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
 
 can_gas_recent |>
   mutate(next_month = Month + 1,
@@ -91,8 +106,11 @@ can_gas_recent |>
 
 view(can_gas_recent)
 
+<<<<<<< HEAD
 # 2.6d.
 
+=======
+>>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
 can_gas_q <- can_gas |>
   filter(Month <= yearmonth("2004 Dec")) |>
   index_by(Quarter = yearquarter(Month)) |>
@@ -111,8 +129,11 @@ tail(can_gas_q)
 
 retail_ts |> autoplot(sales)
 
+<<<<<<< HEAD
 # 2.7b.
 
+=======
+>>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
 retail_ts |>
   autoplot(sales) +
   labs(
@@ -121,6 +142,7 @@ retail_ts |>
     x = NULL, y = "Millions of dollars", color = NULL
   ) +
   theme_minimal()
+<<<<<<< HEAD
 
 # In the series that is not seasonally adjusted, we can see a clear pattern where production is high in Q4 and Q1, and low in Q2 and Q3. This pattern is much less visible in the seasonally adjusted series.
 # The two series more or less follow the same path over time, although dramatic shifts in production are less visible in the seasonally adjusted data.
@@ -260,3 +282,18 @@ retail_ts |>
 
 
 
+=======
+  
+# In the series that is not seasonally adjusted, we can see a clear pattern where production is high in Q4 and Q1, and low in Q2 and Q3. This pattern is much less visible in the seasonally adjusted series.
+# The two series more or less follow the same path over time, although dramatic shifts in production are less visible in the seasonally adjusted data.
+
+
+ggplot(can_gas, aes(x = Month, y = Volume)) +
+  geom_line() +
+  labs(
+    title = "Canadian Gas Production",
+    x = NULL, y = "Volume"
+  ) +
+  theme_minimal()
+
+>>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
