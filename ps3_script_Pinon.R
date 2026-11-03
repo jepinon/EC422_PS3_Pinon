@@ -279,7 +279,7 @@ ggplot(can_gas, aes(x = Month, y = Volume)) +
   ) +
   theme_minimal()
 
-# Part 4: Wrangle the Data
+# Part 4: Seeing, Decomposing, and Modeling Seasonality
 
 # 4.1 Season Plot
 
@@ -406,10 +406,61 @@ can_gas_fit |>
 # Because the p-value of the Ljung-Box test is 0, and less than 0.05, we can conclude that the residuals are not white noise. There is significant autocorrelation in the residuals, and there is visible structure that must be modeled further.
 
 
+# Part 5: A First Forecast Evaluation
+
+# 5.1 An Expanding Window TS-CV
+
+gas_cv_fc <- can_gas |>
+  select(Month, Volume) |>
+  stretch_tsibble(.init = 240, .step = 1) |>
+  model(snaive = SNAIVE(Volume),
+        tslm   = TSLM(log(Volume) ~ trend() + season())) |>
+  forecast(h = 1)
+
+head(gas_cv_fc)
+
+tail(gas_cv_fc)
+
+gas_cv_fc |>
+  accuracy(can_gas, measures = list(MAE = MAE, RMSE = RMSE))
+
+# The first and last forecasts that are evaluated are from January 1980 and March 2005.
+
+# The MAE and RMSE for the seasonal random walk model are 0.562, and 0.702, respectively. The MAE and RMSE for the linear trend + seasonal dummies model are 4.01 and 4.36, respectively.
+
+# The seasonal random walk model is clearly a much more accurate forecast of gas production, with both accuracy metrics being much smaller compared to those for the linear trend + seasonal dummies model.
 
 
+# 5.2 Is the Difference Significant?
 
+errs <- gas_cv_fc |>
+  as_tibble() |>
+  left_join(as_tibble(can_gas) |> select(Month, actual = Volume),
+            by = "Month") |>
+  mutate(e = actual - .mean) |>
+  select(Month, .model, e) |>
+  pivot_wider(names_from = .model, values_from = e) |>
+  na.omit()
 
+forecast::dm.test(errs$snaive, errs$tslm, h = 1, power = 1)
+
+# The DM statistic is -31.278, and the p-value is 2.2e-16. Because the p-value is so small, and much less than 0.05, we can conclude that the difference in accuracy between the two models is significant, and that, as we thought, the seasonal random walk is the much more accurate model.
+
+# 5.3 A Rolling Window
+
+gas_cv_fc <- can_gas |>
+  select(Month, Volume) |>
+  slide_tsibble(.size = 240, .step = 1) |>
+  model(snaive = SNAIVE(Volume),
+        tslm   = TSLM(log(Volume) ~ trend() + season())) |>
+  forecast(h = 1)
+
+gas_cv_fc |>
+  accuracy(can_gas, measures = list(MAE = MAE, RMSE = RMSE))
+
+# The MAE and RMSE for the seasonal random walk model are 0.562, and 0.702, respectively. The MAE and RMSE for the linear trend + seasonal dummies model are 2.09 and 2.42, respectively.
+
+# The seasonal random walk model did not see any change in accuracy, while the linear trend + seasonal dummies model saw its accuracy metrics improve significantly, with both MAE and RMSE decreasing. The rolling window cycles out the outdated data, which we observed from the fitted line was not very consistent with the model at times, particulary in the 1980s.
 
 
 
