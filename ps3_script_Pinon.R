@@ -11,11 +11,9 @@ retail_raw <- read_csv("data/retail_sales_raw.csv")
 
 head(retail_raw)
 
-<<<<<<< HEAD
 # 2.2b.
 
-=======
->>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
+
 retail_raw <- read_csv(
   "data/retail_sales_raw.csv",
   na = ".",
@@ -42,11 +40,10 @@ retail_ts <- retail_raw_long |>
   mutate(Month = yearmonth(observation_date)) |>
   as_tsibble(index = Month, key = series_id)
 
-<<<<<<< HEAD
+
 # 2.4b.
 
-=======
->>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
+
 head(retail_ts)
 
 has_gaps(retail_ts)
@@ -58,11 +55,10 @@ head(canadian_gas)
 key_vars(canadian_gas)
 index_var(canadian_gas)
 
-<<<<<<< HEAD
+
 # 2.5b.
 
-=======
->>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
+
 can_gas <- canadian_gas |>
   select(Month, Volume)
 
@@ -77,11 +73,10 @@ can_gas_recent <- can_gas |>
 
 head(can_gas_recent)
 
-<<<<<<< HEAD
+
 # 2.6b.
 
-=======
->>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
+
 can_gas_recent <- can_gas_recent |>
   mutate(year = year(Month),
          month = month(Month, label = TRUE),
@@ -94,10 +89,9 @@ can_gas_recent |>
 
 # The month with the highest average production is December, and the month with the lowest is June.
 
-<<<<<<< HEAD
+
 # 2.6c.
-=======
->>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
+
 
 can_gas_recent |>
   mutate(next_month = Month + 1,
@@ -106,11 +100,10 @@ can_gas_recent |>
 
 view(can_gas_recent)
 
-<<<<<<< HEAD
+
 # 2.6d.
 
-=======
->>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
+
 can_gas_q <- can_gas |>
   filter(Month <= yearmonth("2004 Dec")) |>
   index_by(Quarter = yearquarter(Month)) |>
@@ -129,11 +122,9 @@ tail(can_gas_q)
 
 retail_ts |> autoplot(sales)
 
-<<<<<<< HEAD
 # 2.7b.
 
-=======
->>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
+
 retail_ts |>
   autoplot(sales) +
   labs(
@@ -142,7 +133,7 @@ retail_ts |>
     x = NULL, y = "Millions of dollars", color = NULL
   ) +
   theme_minimal()
-<<<<<<< HEAD
+
 
 # In the series that is not seasonally adjusted, we can see a clear pattern where production is high in Q4 and Q1, and low in Q2 and Q3. This pattern is much less visible in the seasonally adjusted series.
 # The two series more or less follow the same path over time, although dramatic shifts in production are less visible in the seasonally adjusted data.
@@ -276,14 +267,6 @@ retail_ts |>
 
 # We can see that the month over month growth of the seasonally adjusted series is much more stable and less noisy than that of the non-adjusted series. We saw a very similar effect to the plot from 2.7b, which showed a vast difference in swings between the two series.
 
-
-
-
-
-
-
-=======
-  
 # In the series that is not seasonally adjusted, we can see a clear pattern where production is high in Q4 and Q1, and low in Q2 and Q3. This pattern is much less visible in the seasonally adjusted series.
 # The two series more or less follow the same path over time, although dramatic shifts in production are less visible in the seasonally adjusted data.
 
@@ -296,4 +279,140 @@ ggplot(can_gas, aes(x = Month, y = Volume)) +
   ) +
   theme_minimal()
 
->>>>>>> 7f1525b11f892fb317dfc9852fc19387e16247c6
+# Part 4: Wrangle the Data
+
+# 4.1 Season Plot
+
+# 4.1a.
+
+retail_ts |>
+  filter(series_id == "RSAFSNA") |>
+  gg_season(sales) +
+  labs(
+    title = "Seasonal Pattern in NSA Retail Sales",
+    y = "Millions of dollars"
+  ) +
+  theme_minimal()
+
+# 4.1b
+
+retail_ts |>
+  filter(series_id == "RSAFS") |>
+  gg_season(sales) +
+  labs(
+    title = "Seasonal Pattern in SA Retail Sales",
+    y = "Millions of dollars"
+  ) +
+  theme_minimal()
+
+# The plot for the seasonally adjusted sales shows virtually all seasonality removed, while the non-seasonally adjusted plot shows clear seasonal patterns with peaks in Q1 and Q4.
+
+# 4.1c.
+
+can_gas |>
+  gg_season(log_volume) +
+  labs(
+    title = "Seasonal Pattern in Canadian Gas Production",
+    y = "Millions of dollars"
+  ) +
+  theme_minimal()
+
+# We can see seasonal peaks in gas production in the winter months, and lows in the spring and summer months, as would be expected considering seasonal temperature patterns.
+
+# 4.2 A Subseries Plot
+
+can_gas |>
+  gg_subseries(log_volume) +
+  labs(
+    title = "Subseries Plot: Canadian Gas Production",
+    y = "log(Volume)"
+  )
+
+# 4.3 Seasonally Adjusting a Series with X-13ARIMA-SEATS
+
+retail_nsa_x13 <- retail_ts |>
+  filter(series_id == "RSAFSNA") |>
+  model(x13 = X_13ARIMA_SEATS(sales)) |>
+  components()
+
+retail_nsa_x13 |> autoplot()
+
+# The seasonal factor is highest in January 1994, with sales in that month just slightly higher than the trend for that month. The size of the seasonal swings noticably decreases over time.
+
+# 4.3b.
+
+sa_compare <- retail_nsa_x13 |>
+  as_tibble() |>
+  select(Month, mine = season_adjust) |>
+  left_join(
+    retail_ts |>
+      filter(series_id == "RSAFS") |>
+      as_tibble() |>
+      transmute(Month, census = sales),
+    by = "Month"
+  ) |>
+  mutate(pct_diff = 100 * (log(mine) - log(census)))
+
+sa_compare |>
+  ggplot(aes(x = Month, y = pct_diff)) +
+  geom_line() +
+  labs(
+    title = "My X-13 Seasonal Adjustment Minus the Census Bureau's",
+    x = NULL, y = "Difference (%)"
+  ) +
+  theme_minimal()
+
+# The adjustment I made using X-13ARIMA-SEATS is very similar to the adjustment made by the Census Bureau, with the difference between the two adjustments being very small and generally centered around 0. The models have their largest differences from 2020 onwards, with differences approaching 2%.
+
+
+# 4.4 A Simple Model - Linear Trend + Seasonal Dummies
+
+# 4.4a.
+
+can_gas_fit <- can_gas |>
+  model(TSLM(log_volume ~ trend() + season()))
+
+report(can_gas_fit)
+
+can_gas_fit |>
+  tidy() |>
+  select(term, estimate, std.error, statistic, p.value) |>
+  knitr::kable(digits = 3)
+
+# The estimated average growth rate of gas production is 0.004. The month with the most significant seasonal effect is June, with a t-statistic of -4.777.
+
+
+# 4.4b.
+
+can_gas_fit |>
+  augment() |>
+  ggplot(aes(x = Month)) +
+  geom_line(aes(y = log_volume, color = "Actual")) +
+  geom_line(aes(y = .fitted, color = "Fitted")) +
+  labs(title = "Linear Trend + Seasonal Dummies Fit: Canadian Gas Production",
+       y = "log(Volume)", color = NULL) +
+  theme_minimal()
+
+# The fitted line is generally a good fit for the actual data, deviated mostly in the 1970s, but closely following the actual data from the 1980s onward.
+
+# 4.4c.
+
+can_gas_fit |> gg_tsresiduals()
+
+can_gas_fit |>
+  augment() |>
+  features(.innov, ljung_box, lag = 24)
+
+# Because the p-value of the Ljung-Box test is 0, and less than 0.05, we can conclude that the residuals are not white noise. There is significant autocorrelation in the residuals, and there is visible structure that must be modeled further.
+
+
+
+
+
+
+
+
+
+
+
+
