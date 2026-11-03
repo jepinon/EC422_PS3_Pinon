@@ -58,7 +58,6 @@ index_var(canadian_gas)
 
 # 2.5b.
 
-
 can_gas <- canadian_gas |>
   select(Month, Volume)
 
@@ -123,7 +122,6 @@ tail(can_gas_q)
 retail_ts |> autoplot(sales)
 
 # 2.7b.
-
 
 retail_ts |>
   autoplot(sales) +
@@ -209,7 +207,7 @@ retail_RSAFSNA |>
   autoplot(sales) +
   geom_smooth() +
   labs(
-    title = "Log U.S. Retail and Food Services Sales",
+    title = "Level U.S. Retail and Food Services Sales",
     x = NULL, y = "Millions of dollars", color = NULL
   ) +
   theme_minimal()
@@ -270,14 +268,6 @@ retail_ts |>
 # In the series that is not seasonally adjusted, we can see a clear pattern where production is high in Q4 and Q1, and low in Q2 and Q3. This pattern is much less visible in the seasonally adjusted series.
 # The two series more or less follow the same path over time, although dramatic shifts in production are less visible in the seasonally adjusted data.
 
-
-ggplot(can_gas, aes(x = Month, y = Volume)) +
-  geom_line() +
-  labs(
-    title = "Canadian Gas Production",
-    x = NULL, y = "Volume"
-  ) +
-  theme_minimal()
 
 # Part 4: Seeing, Decomposing, and Modeling Seasonality
 
